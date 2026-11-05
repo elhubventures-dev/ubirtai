@@ -1,8 +1,32 @@
-import React from 'react';
-import { Download, ChevronRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronRight, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { submitForm } from '../utils/submitForm';
 
 const Footer = () => {
+    const [email, setEmail] = useState('');
+    const [company, setCompany] = useState('');
+    const [status, setStatus] = useState('idle'); // idle | loading | success | error
+    const [error, setError] = useState('');
+
+    const handleWaitlistSubmit = async (e) => {
+        e.preventDefault();
+        if (!email) return;
+
+        setStatus('loading');
+        setError('');
+
+        try {
+            await submitForm('/api/waitlist', { email, company });
+            setStatus('success');
+            setEmail('');
+            setCompany('');
+        } catch (err) {
+            setStatus('error');
+            setError(err.message || 'Something went wrong. Please try again.');
+        }
+    };
+
     return (
         <footer className="relative mt-12 bg-surface/50 border-t border-white/5 pt-20 pb-8 overflow-hidden">
             {/* Huge subtle glow for the final CTA */}
@@ -36,27 +60,52 @@ const Footer = () => {
 
                     <div className="mt-8 flex flex-col items-center gap-3 w-full max-w-md">
                         <p className="text-textMuted text-sm font-medium">Not on Android? Join the waitlist for our iOS release and exclusive updates.</p>
-                        <form
-                            action="https://formsubmit.co/info@ubirtai.site"
-                            method="POST"
-                            className="flex w-full mt-2 relative group"
-                        >
-                            <input type="hidden" name="_subject" value="New iOS Waitlist Signup!" />
-                            <input type="hidden" name="_captcha" value="false" />
-                            <input
-                                type="email"
-                                name="email"
-                                placeholder="Enter email for ios waitlist"
-                                required
-                                className="w-full bg-surface/80 border border-white/10 rounded-xl py-3 pl-6 pr-24 text-sm text-textMain placeholder-textMuted focus:outline-none focus:border-success/50 focus:ring-1 focus:ring-success/50 transition-all duration-300"
-                            />
-                            <button
-                                type="submit"
-                                className="absolute right-1.5 top-1.5 bottom-1.5 px-6 rounded-lg bg-linear-to-r from-primary to-[#00b4d8] hover:from-primary hover:to-accent text-white font-semibold text-sm shadow-[0_0_15px_rgba(13,92,186,0.4)] hover:shadow-[0_0_20px_rgba(13,92,186,0.6)] transition-all duration-300"
+                        {status === 'success' ? (
+                            <div className="flex items-center gap-2 text-success text-sm font-medium py-3">
+                                <CheckCircle size={18} />
+                                You&apos;re on the iOS waitlist — check your inbox.
+                            </div>
+                        ) : (
+                            <form
+                                onSubmit={handleWaitlistSubmit}
+                                className="flex w-full mt-2 relative group"
                             >
-                                Join
-                            </button>
-                        </form>
+                                <div
+                                    aria-hidden="true"
+                                    style={{ position: 'absolute', left: '-10000px', top: 'auto', width: '1px', height: '1px', overflow: 'hidden' }}
+                                >
+                                    <label htmlFor="waitlist-company">Company</label>
+                                    <input
+                                        id="waitlist-company"
+                                        type="text"
+                                        name="company"
+                                        tabIndex={-1}
+                                        autoComplete="off"
+                                        value={company}
+                                        onChange={(e) => setCompany(e.target.value)}
+                                    />
+                                </div>
+                                <input
+                                    type="email"
+                                    name="email"
+                                    placeholder="Enter email for ios waitlist"
+                                    required
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="w-full bg-surface/80 border border-white/10 rounded-xl py-3 pl-6 pr-24 text-sm text-textMain placeholder-textMuted focus:outline-none focus:border-success/50 focus:ring-1 focus:ring-success/50 transition-all duration-300"
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={status === 'loading'}
+                                    className="absolute right-1.5 top-1.5 bottom-1.5 px-6 rounded-lg bg-linear-to-r from-primary to-[#00b4d8] hover:from-primary hover:to-accent text-white font-semibold text-sm shadow-[0_0_15px_rgba(13,92,186,0.4)] hover:shadow-[0_0_20px_rgba(13,92,186,0.6)] transition-all duration-300 disabled:opacity-50"
+                                >
+                                    {status === 'loading' ? '...' : 'Join'}
+                                </button>
+                            </form>
+                        )}
+                        {status === 'error' && (
+                            <p className="text-sm text-red-400" role="alert">{error}</p>
+                        )}
                     </div>
                 </div>
             </div>

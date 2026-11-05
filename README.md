@@ -1,16 +1,30 @@
-# React + Vite
+# UBIRT.AI website
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + Vite marketing site for [UBIRT.AI](https://www.ubirtai.site).
 
-Currently, two official plugins are available:
+## Scripts
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- `npm run dev` — Vite frontend only (API routes need `vercel dev`)
+- `npm run build` / `npm run preview` — production build
+- `npx vercel dev` — frontend + `/api` serverless routes locally
 
-## React Compiler
+## Email (Resend + Vercel)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Transactional mail is sent from Vercel serverless functions under `api/`:
 
-## Expanding the ESLint configuration
+| Endpoint | Purpose |
+|----------|---------|
+| `POST /api/contact` | Contact form → admin alert + user confirmation |
+| `POST /api/newsletter` | Newsletter signup → admin alert + welcome email |
+| `POST /api/waitlist` | iOS waitlist → admin alert + waitlist confirmation |
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Environment variables
+
+Copy `.env.example` to `.env.local` (gitignored). Set the same keys in the **Vercel project → Settings → Environment Variables**:
+
+- `RESEND_API_KEY` — Resend API key (**rotate** any key that was shared outside Vercel)
+- `RESEND_FROM` — e.g. `UBIRT.AI <info@ubirtai.site>` (domain must be verified in Resend)
+- `NOTIFY_TO` — inbox for admin alerts (default `info@ubirtai.site`)
+- `SITE_URL` — `https://www.ubirtai.site`
+
+Never commit real secrets. After rotating a key in Resend, update Vercel and `.env.local`.

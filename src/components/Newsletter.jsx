@@ -3,23 +3,31 @@ import { Send, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { trackEvent, ANALYTICS_EVENTS } from '../utils/analytics';
 import { Link } from 'react-router-dom';
+import { submitForm } from '../utils/submitForm';
 
 const Newsletter = () => {
     const [email, setEmail] = useState('');
-    const [status, setStatus] = useState('idle'); // idle, loading, success
+    const [company, setCompany] = useState('');
+    const [status, setStatus] = useState('idle'); // idle, loading, success, error
+    const [error, setError] = useState('');
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         if (!email) return;
 
         setStatus('loading');
-        trackEvent(ANALYTICS_EVENTS.NEWSLETTER_SIGNUP, { method: 'footer_form' });
+        setError('');
+        trackEvent(ANALYTICS_EVENTS.NEWSLETTER_SIGNUP, { method: 'newsletter_form' });
 
-        // Simulate API call
-        setTimeout(() => {
+        try {
+            await submitForm('/api/newsletter', { email, company });
             setStatus('success');
             setEmail('');
-        }, 1500);
+            setCompany('');
+        } catch (err) {
+            setStatus('error');
+            setError(err.message || 'Something went wrong. Please try again.');
+        }
     };
 
     return (
@@ -52,7 +60,7 @@ const Newsletter = () => {
                                         <CheckCircle size={32} />
                                     </div>
                                     <h3 className="text-2xl font-bold">You're on the list!</h3>
-                                    <p className="text-white/70">Welcome to the future of elite content.</p>
+                                    <p className="text-white/70">Check your inbox for a welcome confirmation.</p>
                                 </motion.div>
                             ) : (
                                 <motion.form
@@ -61,24 +69,44 @@ const Newsletter = () => {
                                     animate={{ opacity: 1 }}
                                     exit={{ opacity: 0 }}
                                     onSubmit={handleSubmit}
-                                    className="relative max-w-md mx-auto flex flex-col sm:flex-row gap-3"
+                                    className="relative max-w-md mx-auto flex flex-col gap-3"
                                 >
-                                    <input
-                                        type="email"
-                                        placeholder="Enter your best email..."
-                                        required
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        className="flex-1 px-6 py-4 rounded-2xl bg-background border border-white/10 text-white placeholder:text-textMuted focus:outline-none focus:border-primary/50 transition-colors"
-                                    />
-                                    <button
-                                        type="submit"
-                                        disabled={status === 'loading'}
-                                        className="px-8 py-4 rounded-2xl bg-white text-background font-bold hover:bg-primary hover:text-white transition-all duration-300 flex items-center justify-center gap-2 group disabled:opacity-50"
+                                    <div
+                                        aria-hidden="true"
+                                        style={{ position: 'absolute', left: '-10000px', top: 'auto', width: '1px', height: '1px', overflow: 'hidden' }}
                                     >
-                                        <span>{status === 'loading' ? 'Joining...' : 'Join Now'}</span>
-                                        <Send size={18} className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
-                                    </button>
+                                        <label htmlFor="newsletter-company">Company</label>
+                                        <input
+                                            id="newsletter-company"
+                                            type="text"
+                                            name="company"
+                                            tabIndex={-1}
+                                            autoComplete="off"
+                                            value={company}
+                                            onChange={(e) => setCompany(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col sm:flex-row gap-3">
+                                        <input
+                                            type="email"
+                                            placeholder="Enter your best email..."
+                                            required
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            className="flex-1 px-6 py-4 rounded-2xl bg-background border border-white/10 text-white placeholder:text-textMuted focus:outline-none focus:border-primary/50 transition-colors"
+                                        />
+                                        <button
+                                            type="submit"
+                                            disabled={status === 'loading'}
+                                            className="px-8 py-4 rounded-2xl bg-white text-background font-bold hover:bg-primary hover:text-white transition-all duration-300 flex items-center justify-center gap-2 group disabled:opacity-50"
+                                        >
+                                            <span>{status === 'loading' ? 'Joining...' : 'Join Now'}</span>
+                                            <Send size={18} className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
+                                        </button>
+                                    </div>
+                                    {status === 'error' && (
+                                        <p className="text-sm text-red-400" role="alert">{error}</p>
+                                    )}
                                 </motion.form>
                             )}
                         </AnimatePresence>

@@ -11,6 +11,9 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
+.env.local
+.env.*.local
 
 # Wave A Lighthouse raw dumps (regenerate with npx lighthouse …)
 .wave-a-lh*.json
